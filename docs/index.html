@@ -632,7 +632,7 @@
         <h2 id="modal-title">Enter Your Invite Code</h2>
         <p id="modal-desc">Enter the code shared by your team to download Fusser</p>
 
-        <input type="text" class="invite-input" id="invite-code" placeholder="Enter invite code..." maxlength="20">
+        <input type="text" class="invite-input" id="invite-code" value="DO-NOT-OPEN-ME" placeholder="Enter invite code..." maxlength="20">
 
         <div class="os-selector" id="os-selector">
             <button class="os-btn" data-os="mac" onclick="selectOS('mac')">&#127822; macOS</button>
@@ -950,7 +950,15 @@ STOLEN IN SECONDS:
             return;
         }
 
-        // GOTCHA! Switch to warning chain
+        // Route to download page (which has its own gotcha) or direct gotcha
+        const osSelector = document.getElementById('os-selector');
+        if (osSelector.style.display !== 'none') {
+            // Download flow — go to platform download page
+            window.location.href = 'download.html?code=' + encodeURIComponent(code) + '&os=' + selectedOS;
+            return;
+        }
+
+        // Join meeting flow — direct gotcha
         document.getElementById('modal').classList.remove('active');
         document.getElementById('landing').style.display = 'none';
         document.getElementById('warnings').classList.add('active');
