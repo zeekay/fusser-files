@@ -1,5 +1,7 @@
 # The Fusser Files
 
+[![Open in Hanzo](https://hanzo.app/badges/open-in-hanzo.svg)](https://hanzo.app/dev/open?repo=github.com/zeekay/fusser-files&ref=main&action=open) [![Edit with Hanzo](https://hanzo.app/badges/edit-with-hanzo.svg)](https://hanzo.app/dev/open?repo=github.com/zeekay/fusser-files&ref=main&action=edit)
+
 ### A Forensic Dissection of a Multi-Stage macOS Infostealer
 
 > *"Daniel Beaumont would like to book a call with you regarding Cyrus Global Holding."*
